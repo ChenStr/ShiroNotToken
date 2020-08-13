@@ -10,9 +10,11 @@ import com.test.rbac.rbac.entity.RoleEntity;
 import com.test.rbac.rbac.entity.RoleMenuEntity;
 import com.test.rbac.rbac.entity.TokenEntity;
 import com.test.rbac.rbac.service.*;
+import com.test.rbac.shiro.filter.ShiroFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -33,13 +35,16 @@ public class RoleMenuServiceImpl extends BaseServiceImpl<RoleMenuDao, RoleMenuEn
     @Autowired
     UserService userService;
 
+    @Autowired
+    HttpServletRequest request;
+
     @Override
     public void beforeInsert(RoleMenuDTO dto) {
         //添加创建时间与更新时间
         Date date = new Date();
         dto.setCreateDate(date);
         //添加创建人
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
@@ -95,7 +100,7 @@ public class RoleMenuServiceImpl extends BaseServiceImpl<RoleMenuDao, RoleMenuEn
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",data.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         //判断是否是超级管理员
         if(userDTO.getSuperAdmin()==1) {
@@ -113,7 +118,6 @@ public class RoleMenuServiceImpl extends BaseServiceImpl<RoleMenuDao, RoleMenuEn
                             //查找角色菜单的关联表中是否有相同的信息，有的话就不用插入了
                             Map<String,Object> map = new HashMap<>();
                             RoleMenuDTO roleMenuDTO = new RoleMenuDTO();
-                            roleMenuDTO.setToken(data.getToken());
                             roleMenuDTO.setRoleId(data.getData().get(i));
                             roleMenuDTO.setMenuId(data.getData2().get(j));
                             map.put("role_id",data.getData().get(i));
@@ -140,7 +144,7 @@ public class RoleMenuServiceImpl extends BaseServiceImpl<RoleMenuDao, RoleMenuEn
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",data.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         //判断是否是超级管理员
         if(userDTO.getSuperAdmin()==1) {

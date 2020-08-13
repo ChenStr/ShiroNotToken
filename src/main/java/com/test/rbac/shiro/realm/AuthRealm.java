@@ -4,8 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.test.rbac.rbac.dto.MenuDTO;
 import com.test.rbac.rbac.dto.RoleDTO;
+import com.test.rbac.rbac.dto.TokenDTO;
+import com.test.rbac.rbac.dto.UserDetailed;
 import com.test.rbac.rbac.entity.*;
 import com.test.rbac.rbac.service.*;
+import com.test.rbac.shiro.filter.ShiroFilter;
 import com.test.rbac.tools.password.PasswordUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
@@ -14,9 +17,12 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.hibernate.validator.internal.util.privilegedactions.GetMethod;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.management.relation.Role;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +46,12 @@ public class AuthRealm extends AuthorizingRealm {
     @Autowired
     MenuService menuService;
 
+    @Autowired
+    HttpServletRequest request;
+
+    @Autowired
+    TokenService tokenService;
+
 
     /**
      * 授权逻辑(登陆后的判断权限)
@@ -53,6 +65,7 @@ public class AuthRealm extends AuthorizingRealm {
 
         //得到用户信息
         UserEntity userEntity = (UserEntity) subject.getPrincipal();
+
         //通过用户信息去查找角色
         if (userEntity==null) {
             return null;
@@ -109,6 +122,19 @@ public class AuthRealm extends AuthorizingRealm {
         }
 
 
+        String token = ShiroFilter.getRequestToken(request);
+        UserDetailed user = (UserDetailed) tokenService.see(token).getData();
+        //判断token是否有效
+        if (user==null){
+            return null;
+        }
+        //判断token的所有者是否跟数据库里的一致
+        if (user.getUserDTO().getId()!=userEntity.getId()){
+            return null;
+        }
+
+
+
         //从Subject类中拿取用户信息
         SimpleAuthorizationInfo account = new SimpleAuthorizationInfo();
 
@@ -129,6 +155,7 @@ public class AuthRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        String accessToken = (String) authenticationToken.getPrincipal();
         //将用户信息保存在Shiro容器里
         UsernamePasswordToken token = (UsernamePasswordToken) authenticationToken;
         //判断密码或用户名是否为空

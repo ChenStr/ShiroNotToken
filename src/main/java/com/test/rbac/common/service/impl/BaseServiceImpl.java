@@ -9,6 +9,7 @@ import com.test.rbac.common.service.BaseService;
 import com.test.rbac.tools.ConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

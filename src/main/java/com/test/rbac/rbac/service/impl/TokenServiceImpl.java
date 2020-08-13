@@ -13,6 +13,7 @@ import com.test.rbac.tools.tokenUtils.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,8 @@ public class TokenServiceImpl extends BaseServiceImpl<TokenDao, TokenEntity, Tok
     @Autowired
     UserService userService;
 
-    QueryWrapper<RoleMenuEntity> roleMenuEntityQueryWrapper = new QueryWrapper<>();
+    @Autowired
+    HttpServletRequest request;
 
 
     /**
@@ -212,8 +214,6 @@ public class TokenServiceImpl extends BaseServiceImpl<TokenDao, TokenEntity, Tok
         //打包发出
         UserDTO userDTO = new UserDTO(userEntity.getId(),userEntity.getRealName());
 
-        //加入token
-        userDTO.setToken(token);
 
         //限制用户能看到的信息
         RoleDTO role = new RoleDTO();

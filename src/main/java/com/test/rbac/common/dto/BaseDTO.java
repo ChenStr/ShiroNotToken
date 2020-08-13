@@ -15,11 +15,6 @@ public class BaseDTO implements Serializable {
 //    private static final long serialVersionUID = 1L;
 
     /**
-     * 用户唯一标识
-     */
-    public String token;
-
-    /**
      * 第几页
      */
     public Integer page;

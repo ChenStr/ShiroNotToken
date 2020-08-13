@@ -16,9 +16,11 @@ import com.test.rbac.rbac.service.RoleService;
 import com.test.rbac.rbac.service.TokenService;
 import com.test.rbac.rbac.service.UserRoleService;
 import com.test.rbac.rbac.service.UserService;
+import com.test.rbac.shiro.filter.ShiroFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -36,13 +38,16 @@ public class UserRoleServiceImpl extends BaseServiceImpl<UserRoleDao, UserRoleEn
     @Autowired
     RoleService roleService;
 
+    @Autowired
+    HttpServletRequest request;
+
     @Override
     public void beforeInsert(UserRoleDTO dto) {
         //添加创建时间
         Date date = new Date();
         dto.setCreateDate(date);
         //添加创建人
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
@@ -100,7 +105,7 @@ public class UserRoleServiceImpl extends BaseServiceImpl<UserRoleDao, UserRoleEn
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",data.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         //判断是否是超级管理员
         if(userDTO.getSuperAdmin()==1) {
@@ -121,7 +126,6 @@ public class UserRoleServiceImpl extends BaseServiceImpl<UserRoleDao, UserRoleEn
                         for (int i = 0; i < data.getData().size(); i++) {
                             for (int j = 0; j < data.getData2().size(); j++) {
                                 UserRoleDTO userRoleDTO = new UserRoleDTO();
-                                userRoleDTO.setToken(data.getToken());
                                 userRoleDTO.setUserId(data.getData().get(i));
                                 userRoleDTO.setRoleId(data.getData2().get(j));
                                 Map<String,Object> map = new HashMap<>();
@@ -152,7 +156,7 @@ public class UserRoleServiceImpl extends BaseServiceImpl<UserRoleDao, UserRoleEn
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",data.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         //判断是否是超级管理员
         if(userDTO.getSuperAdmin()==1) {

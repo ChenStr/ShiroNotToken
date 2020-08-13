@@ -1,14 +1,19 @@
 package com.test.rbac.rbac.config;
 
+
+import com.test.rbac.shiro.filter.ShiroFilter;
 import com.test.rbac.shiro.realm.AuthRealm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.servlet.Filter;
 import java.util.HashMap;
 import java.util.Map;
+
 
 @Configuration
 public class ShiroConfig {
@@ -19,10 +24,15 @@ public class ShiroConfig {
      * @param defaultWebSecurityManager
      * @return
      */
+
     @Bean
     public ShiroFilterFactoryBean shiroFilterFactoryBean(@Qualifier("defaultWebSecurityManager") DefaultWebSecurityManager defaultWebSecurityManager){
         //创建Shiro启用必要的工厂文件
         ShiroFilterFactoryBean factory = new ShiroFilterFactoryBean();
+        //设置自己的Shiro过滤器
+        Map<String, Filter> filter = new HashMap<>();
+        filter.put("authc",new ShiroFilter());
+        factory.setFilters(filter);
         //将自己定义的安全管理器设置到工厂类里
         factory.setSecurityManager(defaultWebSecurityManager);
         //认证与授权的逻辑
@@ -32,11 +42,13 @@ public class ShiroConfig {
         //访问/manage接口时必须要有manage权限才可以
         map.put("/basic/UserController","perms[UserController]");
         //访问/administrator接口时必须要有administrator角色才能访问
-        map.put("/basic/test","roles[test]");
+        map.put("/basic/test","roles[demo2]");
         //往工厂类里添加你设置的认证与授权规则
         factory.setFilterChainDefinitionMap(map);
         //设置登陆页面
         factory.setLoginUrl("/basic/login");
+        //设置未授权页面
+        factory.setUnauthorizedUrl("/basic/notAuth");
         //将创建的安全管理器返回
         return factory;
     }
@@ -65,5 +77,14 @@ public class ShiroConfig {
     public AuthRealm authRealm(){
         return new AuthRealm();
     }
+
+
+    /**
+     * thymeleaf整合Shiro的类
+     */
+//    @Bean
+//    public ShiroDialect shiroDialect(){
+//        return new ShiroDialect();
+//    }
 
 }

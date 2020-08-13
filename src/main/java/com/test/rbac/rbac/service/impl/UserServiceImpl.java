@@ -11,10 +11,12 @@ import com.test.rbac.rbac.entity.TokenEntity;
 import com.test.rbac.rbac.entity.UserEntity;
 import com.test.rbac.rbac.entity.UserRoleEntity;
 import com.test.rbac.rbac.service.*;
+import com.test.rbac.shiro.filter.ShiroFilter;
 import com.test.rbac.tools.password.PasswordUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.Map;
  */
 @Service
 public class UserServiceImpl extends BaseServiceImpl<UserDao, UserEntity, UserDTO> implements UserService {
+
     @Autowired
     UserRoleService userRoleService;
 
@@ -39,13 +42,8 @@ public class UserServiceImpl extends BaseServiceImpl<UserDao, UserEntity, UserDT
     @Autowired
     MenuService menuService;
 
-    QueryWrapper<UserEntity> userQueryWrapper = new QueryWrapper<>();
-
-    QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-
-    QueryWrapper<UserRoleEntity> userRoleEntityQueryWrapper = new QueryWrapper<>();
-
-    QueryWrapper<RoleMenuEntity> roleMenuEntityQueryWrapper = new QueryWrapper<>();
+    @Autowired
+    HttpServletRequest request;
 
     /**
      * 在添加信息前加密密码
@@ -60,8 +58,9 @@ public class UserServiceImpl extends BaseServiceImpl<UserDao, UserEntity, UserDT
         //添加修改人与创建人
 
         //获取用户token
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
+        QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
         //如果查找的到的话
         if(tokenEntity!=null){
@@ -79,8 +78,9 @@ public class UserServiceImpl extends BaseServiceImpl<UserDao, UserEntity, UserDT
         //添加修改人
 
         //获取用户token
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
+        QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
         //如果查找的到的话
         if(tokenEntity!=null){
@@ -102,6 +102,7 @@ public class UserServiceImpl extends BaseServiceImpl<UserDao, UserEntity, UserDT
             result.setAll(10001,null,"参数错误,请仔细检查您输入的参数!");
             return result;
         }
+        QueryWrapper<UserEntity> userQueryWrapper = new QueryWrapper<>();
         UserEntity userEntity = this.getOne(userQueryWrapper.eq("username",userDTO.getUsername()));
         //判断用户是否存在
         if (userEntity==null){

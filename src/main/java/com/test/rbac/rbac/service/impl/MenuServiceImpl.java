@@ -14,10 +14,12 @@ import com.test.rbac.rbac.service.MenuService;
 import com.test.rbac.rbac.service.RoleMenuService;
 import com.test.rbac.rbac.service.TokenService;
 import com.test.rbac.rbac.service.UserService;
+import com.test.rbac.shiro.filter.ShiroFilter;
 import com.test.rbac.tools.my.MyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -35,6 +37,9 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
     @Autowired
     RoleMenuService roleMenuService;
 
+    @Autowired
+    HttpServletRequest request;
+
     /**
      * 在插入后的钩子方法
      * @param dto
@@ -47,7 +52,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
         dto.setUpdateDate(date);
         //添加创建人与更新人
         //获取用户token
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
@@ -70,7 +75,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
         dto.setUpdateDate(date);
         //添加更新人
         //获取用户token
-        String token = dto.getToken();
+        String token = ShiroFilter.getRequestToken(request);
         //通过用户的token来查找用户的id
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
         TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",token));
@@ -96,7 +101,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
             result.setAll(20000,menus,"没有查找结果，建议仔细核对查找条件");
         }else{
             MenuDTO menuDTO = new MenuDTO();
-            menuDTO.setToken("1");menuDTO.setId(1L);menuDTO.setPid(1L);menuDTO.setIcon("112");menuDTO.setPermissions("11");
+            menuDTO.setId(1L);menuDTO.setPid(1L);menuDTO.setIcon("112");menuDTO.setPermissions("11");
             result.setAll(20000,menus,"查找成功");
         }
         return result;
@@ -112,7 +117,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token", dto.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token", ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         if (userDTO.getSuperAdmin() == 1) {
             //判断数据库里是否有相同的名字的菜单了
@@ -151,7 +156,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",dto.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         if(userDTO.getSuperAdmin()==1){
             //设置用户不允许修改的属性
@@ -177,7 +182,7 @@ public class MenuServiceImpl extends BaseServiceImpl<MenuDao, MenuEntity, MenuDT
         CommonReturn result = new CommonReturn();
         //通过token判断用户是否是超级管理员
         QueryWrapper<TokenEntity> tokenQueryWrapper = new QueryWrapper<>();
-        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ids.getToken()));
+        TokenEntity tokenEntity = tokenService.getOne(tokenQueryWrapper.eq("token",ShiroFilter.getRequestToken(request)));
         UserDTO userDTO = userService.selectById(tokenEntity.getUserId());
         if(userDTO.getSuperAdmin()==1){
             if (ids.getData()!=null && ids.getData().size() > 0){

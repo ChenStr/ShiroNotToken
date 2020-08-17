@@ -66,62 +66,63 @@ public class AuthRealm extends AuthorizingRealm {
         //得到用户信息
         UserEntity userEntity = (UserEntity) subject.getPrincipal();
 
-        //通过用户信息去查找角色
-        if (userEntity==null) {
-            return null;
-        }
+//        //通过用户信息去查找角色
+//        if (userEntity==null) {
+//            return null;
+//        }
+//        Set<String> roles = new HashSet<>();
+//        Set<String> menus = new HashSet<>();
+//        //判断用户是不是超级管理员
+//        if(userEntity.getSuperAdmin()==1){
+//            //查找所有角色与权限
+//            QueryWrapper<RoleEntity> roleEntityQueryWrapper = new QueryWrapper<>();
+//            QueryWrapper<MenuEntity> menuEntityQueryWrapper = new QueryWrapper<>();
+//            List<RoleDTO> listroles = roleService.select(roleEntityQueryWrapper);
+//            List<MenuDTO> listmenus = menuService.select(menuEntityQueryWrapper);
+//            roles = listroles.stream().map(item-> item.getName()).collect(Collectors.toSet());
+//            menus = listmenus.stream().map(item-> item.getUrl()).collect(Collectors.toSet());
+//        }else{
+//            //存放用户所有角色信息
+//            Set<RoleDTO> setroles = new HashSet<>();
+//            Set<MenuDTO> setmenus = new HashSet<>();
+//            //查找用户角色信息
+//            QueryWrapper<UserRoleEntity> userRoleEntityQueryWrapper = new QueryWrapper<>();
+//            List<UserRoleEntity> userRoles = userRoleService.list(userRoleEntityQueryWrapper.eq("user_id",userEntity.getId()));
+//            //拿出userRole的role_id属性
+//            List<Long> ids = userRoles.stream().map(item -> item.getRoleId()).collect(Collectors.toList());
+//            if (ids.size()<=0){
+//                roles = null;
+//            }else{
+//                List<RoleDTO> listroles = roleService.selectByIds(ids);
+//                //去掉重复的角色
+//                setroles = new HashSet(listroles);
+//                roles = setroles.stream().map(item->item.getName()).collect(Collectors.toSet());
+//            }
+//            //通过用户角色信息来获取用户权限
+//            List<RoleMenuEntity> roleMenuEntities = new ArrayList<>();
+//            //假如角色为空
+//            if (setroles!=null){
+//                //获取用户角色中角色所有的权限id
+//                ids = setroles.stream().map(item -> item.getId()).collect(Collectors.toList());
+//                QueryWrapper<RoleMenuEntity> roleMenuEntityQueryWrapper = new QueryWrapper<>();
+//                List<RoleMenuEntity> roleMenus = new ArrayList<>();
+//                roleMenus = roleMenuService.list(roleMenuEntityQueryWrapper.in("role_id",ids));
+//                roleMenuEntities.addAll(roleMenus);
+//            }
+//            //else里的代码可以存放用户直接与权限关联的逻辑
+//
+//            if (roleMenuEntities==null || roleMenuEntities.size() <= 0){
+//                menus = null;
+//            }else{
+//                ids = roleMenuEntities.stream().map(item -> item.getMenuId()).collect(Collectors.toList());
+//                List<MenuDTO> listmenus = menuService.selectByIds(ids);
+//                setmenus = new HashSet(listmenus);
+//                menus = setmenus.stream().map(item->item.getUrl()).collect(Collectors.toSet());
+//            }
+//        }
+
         Set<String> roles = new HashSet<>();
         Set<String> menus = new HashSet<>();
-        //判断用户是不是超级管理员
-        if(userEntity.getSuperAdmin()==1){
-            //查找所有角色与权限
-            QueryWrapper<RoleEntity> roleEntityQueryWrapper = new QueryWrapper<>();
-            QueryWrapper<MenuEntity> menuEntityQueryWrapper = new QueryWrapper<>();
-            List<RoleDTO> listroles = roleService.select(roleEntityQueryWrapper);
-            List<MenuDTO> listmenus = menuService.select(menuEntityQueryWrapper);
-            roles = listroles.stream().map(item-> item.getName()).collect(Collectors.toSet());
-            menus = listmenus.stream().map(item-> item.getUrl()).collect(Collectors.toSet());
-        }else{
-            //存放用户所有角色信息
-            Set<RoleDTO> setroles = new HashSet<>();
-            Set<MenuDTO> setmenus = new HashSet<>();
-            //查找用户角色信息
-            QueryWrapper<UserRoleEntity> userRoleEntityQueryWrapper = new QueryWrapper<>();
-            List<UserRoleEntity> userRoles = userRoleService.list(userRoleEntityQueryWrapper.eq("user_id",userEntity.getId()));
-            //拿出userRole的role_id属性
-            List<Long> ids = userRoles.stream().map(item -> item.getRoleId()).collect(Collectors.toList());
-            if (ids.size()<=0){
-                roles = null;
-            }else{
-                List<RoleDTO> listroles = roleService.selectByIds(ids);
-                //去掉重复的角色
-                setroles = new HashSet(listroles);
-                roles = setroles.stream().map(item->item.getName()).collect(Collectors.toSet());
-            }
-            //通过用户角色信息来获取用户权限
-            List<RoleMenuEntity> roleMenuEntities = new ArrayList<>();
-            //假如角色为空
-            if (setroles!=null){
-                //获取用户角色中角色所有的权限id
-                ids = setroles.stream().map(item -> item.getId()).collect(Collectors.toList());
-                QueryWrapper<RoleMenuEntity> roleMenuEntityQueryWrapper = new QueryWrapper<>();
-                List<RoleMenuEntity> roleMenus = new ArrayList<>();
-                roleMenus = roleMenuService.list(roleMenuEntityQueryWrapper.in("role_id",ids));
-                roleMenuEntities.addAll(roleMenus);
-            }
-            //else里的代码可以存放用户直接与权限关联的逻辑
-
-            if (roleMenuEntities==null || roleMenuEntities.size() <= 0){
-                menus = null;
-            }else{
-                ids = roleMenuEntities.stream().map(item -> item.getMenuId()).collect(Collectors.toList());
-                List<MenuDTO> listmenus = menuService.selectByIds(ids);
-                setmenus = new HashSet(listmenus);
-                menus = setmenus.stream().map(item->item.getUrl()).collect(Collectors.toSet());
-            }
-        }
-
-
         String token = ShiroFilter.getRequestToken(request);
         UserDetailed user = (UserDetailed) tokenService.see(token).getData();
         //判断token是否有效
@@ -132,7 +133,9 @@ public class AuthRealm extends AuthorizingRealm {
         if (user.getUserDTO().getId()!=userEntity.getId()){
             return null;
         }
-
+        //将用户的角色与权限拿出来
+        roles = user.getRoleDTOS().stream().map(item->item.getName()).collect(Collectors.toSet());
+        menus = user.getMenuDTOS().stream().map(item->item.getUrl()).collect(Collectors.toSet());
 
 
         //从Subject类中拿取用户信息

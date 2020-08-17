@@ -13,14 +13,28 @@ import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.ws.Response;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RequestMapping("/basic")
 @RestController
 public class BasicController{
 
     @Autowired
+    //引入Spring data 的Redis操作组件，配置已经自动配置好了，直接注入即可
+    private RedisTemplate redisTemplate;
+
+    @Autowired
     TokenService tokenService;
+
+    @Autowired
+    HttpServletResponse response;
 
     @GetMapping("/main")
     public ErrorCode main(UserDTO userDTO){
@@ -66,8 +80,13 @@ public class BasicController{
             subject.login(token);
             //得到用户信息
             UserEntity userEntity = (UserEntity) subject.getPrincipal();
+            //登录完成后需要在数据库里修改或者更新token必要的话将token存入redis里
+            Map<String,Object> tokenmap = tokenService.createToken(userEntity.getId());
+            response.setHeader("token", String.valueOf(tokenmap.get("token")));
+            //将用户的token存入redis里
+            redisTemplate.opsForValue().set(userEntity.getId()+"token",tokenmap.get("token"),72000, TimeUnit.SECONDS);
             //获取session
-            subject.getSession();
+//            subject.getSession();
             //往session里面传入值
 //            subject.getSession().setAttribute("user",userEntity);
             return subject.getSession();
